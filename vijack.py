@@ -1,4 +1,4 @@
-from tkinter import *
+#from tkinter import *
 from tkinter import ttk, messagebox, filedialog
 from pytube import YouTube 
 from PIL import Image, ImageTk
