@@ -1,0 +1,114 @@
+from tkinter import *
+from tkinter import ttk, messagebox, filedialog
+from pytube import YouTube 
+from PIL import Image, ImageTk
+import requests
+import io
+
+class YouTubeDownloader:
+    def __init__(self, master):
+        #initializes class with master (main) window
+        self.master = master
+        master.title("Vi-Jack Youtube Downloader")
+        master.geometry("600x400")
+
+        #creating style for the widgets
+        self.style = ttk.Style()
+        self.style.theme_use('clam')
+        self.style.configure("TFrame", background="#fff")
+        self.style.configure("TLabel", background="#fff", foreground="#333", font=("Helvetica", 14))
+        self.style.configure("TButton", background="#ff4500", foreground="#fff", font=("Helvetica", 12), padding=10)
+
+        #create frame to hold the widgets
+        self.frame = ttk.Frame(master, padding=20)
+        self.frame.pack(fill=BOTH, expand=True)
+
+        #create label and entry field for YouTube link
+        self.video_link_label = ttk.Label(self.frame, text="Enter link of YouTube video:")
+        self.video_link_label.pack(pady=10)
+
+        self.video_link_entry = ttk.Entry(self.frame, width=50)
+        self.video_link_entry.pack(pady=10)
+
+        #create search button to search for video
+        self.search_button = ttk.Button(self.frame, text="Search", command= self.search_video)
+        self.search_button.pack(pady=10)
+
+        #create frame to hold thumbnail of video
+        self.thumbnail_frame =ttk.Frame(self.frame, height=200, width=300)
+        self.thumbnail_frame.pack(pady=20)
+
+        #create label to hold thumbnail image
+        self.thumbnail_label = ttk.Label(self.thumbnail_frame, text= "No video selected")
+        self.thumbnail_label.pack(fill=BOTH, expand=True)
+
+        #create label to display title of video
+        self.title_label = ttk.Label(self.frame, text="", font=("Helvetica", 14))
+        self.title_label.pack(pady=10)
+
+        self.download_button = ttk.Button(self.frame, text="Download Video", command= self.download_video, state=DISABLED)
+        self.download_button.pack(pady=20)
+
+    #function to search for the video and display thumbnail and title
+    def search_video(self):
+        #get video link
+        video_link = self.video_link_entry.get()
+        try:
+            #attempt creating youtube object with video link
+            yt = YouTube(video_link)
+        except:
+            #display error if the link is invalid
+            self.thumbnail_label.config(text="Invalid video link!")
+            #disable download button if link is invalid
+            self.download_button.config(state=DISABLED)
+            return
+        
+        #get thumbnail URL of video
+        thumb_url = yt.thumbnail_url
+        #use request library to download thumbnail imagee data and create thumbnail image
+        thumb_data = io.BytesIO(requests.get(thumb_url).content)
+        thumb_image = Image.open(thumb_data).resize((300, 200))
+
+        #create photoimage object from thumbnail image and set it as thumbnail label's image
+        self.thumbnail = ImageTk.PhotoImage(thumb_image)
+        self.thumbnail_label.config(image=self.thumbnail)
+        
+        #set title label's text to title of youtube video
+        self.title_label.config(text=yt.title)
+
+        self.download_button.config(state=NORMAL)
+
+    def download_video(self):
+        #get video link
+        video_link = self.video_link_entry.get()
+
+        #check if thumbnail and title are already generated
+        if self.thumbnail_label.cget("text")=="No video selected":
+            messagebox.showerror("Error", "Please search for a valid video first!")
+            return
+        
+        #download video
+        yt= YouTube(video_link)
+        folder_selected = filedialog.askdirectory()
+        yd = yt.streams.get_highest_resolution()
+        yd.download(folder_selected)
+
+if __name__ == '__main__':
+    #create Tkinter window and initialize class
+    root = Tk()
+    YouTubeDownloader(root) 
+    root.mainloop()
+
+#root.deiconify()
+
+
+
+
+
+#prompt user to select directory
+#root = Tk()
+#root.withdraw()
+#folder_selected = filedialog.askdirectory()
+ 
+
+
